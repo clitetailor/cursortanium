@@ -1,32 +1,53 @@
+use super::helpers::parse_label;
 use super::Cursor;
+use std::borrow::Cow;
+use std::iter::IntoIterator;
+use std::vec::IntoIter;
 
 pub struct Test<'a> {
-    noLabel: bool,
-    prefix: &'a str,
+    pub no_label: bool,
+    pub prefix: &'a str,
 }
 
 impl<'a> Test<'a> {
     pub fn new() -> Test<'a> {
         Test {
-            noLabel: true,
-            prefix: "🚂",
+            no_label: true,
+            prefix: "🌖",
         }
     }
 
-    pub fn capture(&self, input_str: &str) -> String {
+    pub fn capture<'b>(
+        &self,
+        input: Cow<'b, str>,
+    ) -> CaptureResult<'b> {
         let mut chunks: Vec<String> = vec![];
+        let mut indices: Vec<(String, usize)> = vec![];
+        let mut offset: usize = 0;
 
-        let doc = String::from(input_str);
+        let mut cursor = Cursor::from(input);
+        let mut marker = cursor.clone();
 
-        let mut cursor = Cursor::from(&doc);
-        let mut marker = cursor.mark();
+        let prefix_len = self.prefix.chars().count();
 
         while !cursor.is_eof() {
             if cursor.starts_with(&self.prefix) {
                 chunks.push(marker.take_until(&cursor));
-                parse_label(&mut cursor);
+                marker = cursor.clone();
 
-                marker = cursor.mark();
+                cursor.next_mut(prefix_len);
+
+                let label = if self.no_label {
+                    String::from("")
+                } else {
+                    parse_label(&mut cursor)
+                };
+                offset = offset + cursor.get_index()
+                    - marker.get_index();
+
+                indices
+                    .push((label, cursor.get_index() - offset));
+                marker = cursor.clone();
             } else {
                 cursor.next_mut(1);
             };
@@ -34,31 +55,53 @@ impl<'a> Test<'a> {
 
         chunks.push(marker.take_until(&cursor));
 
-        chunks.join("")
+        let doc = chunks.concat();
+
+        CaptureResult {
+            doc: doc.into(),
+            indices,
+        }
     }
 }
 
-pub fn capture(input_str: &str) -> String {
-    Test::new().capture(input_str)
+pub struct CaptureResult<'a> {
+    doc: Cow<'a, str>,
+    indices: Vec<(String, usize)>,
 }
 
-fn parse_label(cursor: &mut Cursor) -> String {
-    if cursor.starts_with("(") {
-        return String::from("");
-    };
-    cursor.next_mut(1);
-
-    let marker = cursor.mark();
-
-    while !cursor.starts_with(")") && !cursor.is_eof() {
-        cursor.next_mut(1);
+impl<'a> CaptureResult<'a> {
+    pub fn iter(&self) -> IntoIter<Cursor<'a>> {
+        self.indices
+            .iter()
+            .map(|index| {
+                Cursor::from_string_at(
+                    self.doc.clone(),
+                    index.1,
+                )
+            })
+            .collect::<Vec<Cursor>>()
+            .into_iter()
     }
+}
 
-    let name = marker.take_until(&cursor);
+impl<'a> IntoIterator for CaptureResult<'a> {
+    type Item = Cursor<'a>;
+    type IntoIter = IntoIter<Self::Item>;
 
-    if !cursor.is_eof() {
-        cursor.next_mut(1);
+    fn into_iter(self) -> Self::IntoIter {
+        self.indices
+            .iter()
+            .map(|index| {
+                Cursor::from_string_at(
+                    self.doc.clone(),
+                    index.1,
+                )
+            })
+            .collect::<Vec<Cursor>>()
+            .into_iter()
     }
+}
 
-    name
+pub fn capture<'a>(input: Cow<'a, str>) -> CaptureResult {
+    Test::new().capture(input)
 }

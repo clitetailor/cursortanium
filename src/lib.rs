@@ -1,22 +1,66 @@
+mod helpers;
 pub mod test;
 
+use std::borrow::Cow;
+
 pub struct Cursor<'a> {
-    doc: &'a String,
+    doc: Cow<'a, str>,
     index: usize,
     end_index: usize,
 }
 
-impl<'a> Cursor<'a> {
-    pub fn from(doc: &'a String) -> Cursor<'a> {
+impl<'a> From<String> for Cursor<'a> {
+    fn from(doc: String) -> Self {
+        let end_index = doc.chars().count();
+
+        Cursor {
+            doc: doc.into(),
+            index: 0,
+            end_index,
+        }
+    }
+}
+
+impl<'a> From<&'a String> for Cursor<'a> {
+    fn from(doc: &'a String) -> Self {
+        let end_index = doc.chars().count();
+
+        Cursor {
+            doc: doc.into(),
+            index: 0,
+            end_index,
+        }
+    }
+}
+
+impl<'a> From<Cow<'a, str>> for Cursor<'a> {
+    fn from(doc: Cow<'a, str>) -> Self {
+        let end_index = doc.chars().count();
+
         Cursor {
             doc,
             index: 0,
-            end_index: doc.len(),
+            end_index,
+        }
+    }
+}
+
+impl<'a> Cursor<'a> {
+    pub fn from_string_at(
+        doc: Cow<'a, str>,
+        index: usize,
+    ) -> Cursor<'a> {
+        let end_index = doc.chars().count();
+
+        Cursor {
+            doc,
+            index,
+            end_index,
         }
     }
 
-    pub fn get_doc(&self) -> &'a String {
-        self.doc
+    pub fn get_doc(&self) -> &Cow<'a, str> {
+        &self.doc
     }
 
     pub fn get_index(&self) -> usize {
@@ -49,36 +93,57 @@ impl<'a> Cursor<'a> {
 
     pub fn starts_with(&self, test_str: &str) -> bool {
         let start = self.index;
-        let assumed_end = start + test_str.len();
+        let count = test_str.chars().count();
 
-        let end = if assumed_end < self.end_index {
-            assumed_end
-        } else {
-            self.end_index
-        };
-
-        self.doc[start..end] == *test_str
+        self.doc
+            .chars()
+            .skip(start)
+            .take(count)
+            .collect::<String>()
+            == test_str
     }
 
-    pub fn lookahead(&mut self, count: usize) -> String {
-        let start = self.index;
-        let end = self.index + count;
-
-        self.doc[start..end].to_owned()
-    }
-
-    pub fn mark(&mut self) -> Cursor<'a> {
-        Cursor {
-            doc: &self.doc,
-            index: self.index,
-            end_index: self.end_index,
+    pub fn one_of<'b>(
+        &self,
+        test_strs: &'b Vec<String>,
+    ) -> Option<&'b String> {
+        for test_str in test_strs {
+            if self.starts_with(test_str) {
+                return Some(test_str);
+            };
         }
+
+        return None;
+    }
+
+    pub fn lookahead(&self, count: usize) -> String {
+        let start = self.index;
+
+        self.doc.chars().skip(start).take(count).collect()
     }
 
     pub fn take_until(&self, cursor: &Cursor) -> String {
         let start = self.index;
-        let end = cursor.get_index();
+        let count = cursor.get_index() - start;
 
-        self.doc[start..end].to_owned()
+        self.doc.chars().skip(start).take(count).collect()
+    }
+
+    pub fn move_to_mut(&mut self, cursor: &Cursor) {
+        self.index = if cursor.index < self.end_index {
+            cursor.index
+        } else {
+            self.end_index
+        };
+    }
+}
+
+impl<'a> Clone for Cursor<'a> {
+    fn clone(&self) -> Self {
+        Cursor {
+            doc: self.doc.to_owned(),
+            index: self.index,
+            end_index: self.end_index,
+        }
     }
 }
