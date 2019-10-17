@@ -2,7 +2,7 @@
   🌖cursortanium
 </h1>
 
-<p align="center">A solid cursor for Rustaceans</p> 
+<p align="center">A solid cursor for Rust</p> 
 
 ## Why cursortanium?
 

@@ -1,7 +1,13 @@
 [package]
 name = "cursortanium"
 version = "0.1.0"
+description = "A solid cursor for Rust"
 authors = ["clitetailor <ducnhatphung@gmail.com>"]
+homepage = "https://github.com/clitetailor/cursortanium"
+keywords = ["cursor", "parser"]
+categories = ["parsing"]
+readme = "README.md"
+license = "MIT"
 edition = "2018"
 
 [dependencies]
