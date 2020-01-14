@@ -1,5 +1,5 @@
 <h1 align="center">
-  🌖cursortanium
+  cursortanium
 </h1>
 
 <p align="center">A solid cursor for Rust</p> 
@@ -29,7 +29,7 @@ fn parse_string(cursor: &mut Cursor) -> Option<String> {
         if cursor.starts_with("\\") {
             chunks.push(marker.take_until(&cursor));
             cursor.next_mut(1);
-            marker = cursor.clone();
+            marker.move_to_mut(&cursor)
             cursor.next_mut(1);
         } else {
             cursor.next_mut(1);
