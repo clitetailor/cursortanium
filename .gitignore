@@ -2,3 +2,6 @@
 **/*.rs.bk
 
 /.vscode
+
+/ccov.zip
+/lcov.info

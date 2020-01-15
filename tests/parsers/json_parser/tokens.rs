@@ -1,14 +1,39 @@
-#[derive(PartialEq, Debug)]
-pub struct Field {
-    name: String,
-    value: Box<Token>,
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
+pub enum ValueToken {
+    Object(ObjectToken),
+    Array(ArrayToken),
+    String(StringToken),
+    Number(NumberToken),
+    Null(NullToken),
 }
 
-#[derive(PartialEq, Debug)]
-pub enum Token {
-    Object { fields: Vec<Box<Field>> },
-    Array { elements: Vec<Token> },
-    String { value: String },
-    Number { value: isize },
-    Null,
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
+pub struct FieldToken {
+    pub name: String,
+    pub value: Box<ValueToken>,
 }
+
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
+pub struct ObjectToken {
+    pub fields: Vec<FieldToken>,
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
+pub struct ArrayToken {
+    pub elements: Vec<ValueToken>,
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
+pub struct StringToken {
+    pub value: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
+pub struct NumberToken {
+    pub value: isize,
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
+pub struct NullToken;
