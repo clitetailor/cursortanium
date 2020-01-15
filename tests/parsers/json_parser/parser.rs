@@ -126,7 +126,6 @@ pub fn parse_field(cursor: &mut Cursor) -> Option<FieldToken> {
                 skip_ws(&mut *cursor);
 
                 if let Some(value) = parse(&mut *cursor) {
-                    
                     skip_ws(&mut *cursor);
 
                     return Some(FieldToken {
