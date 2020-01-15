@@ -38,16 +38,16 @@ fn run_parser_test<
 #[test]
 fn test_parse_string() {
     run_parser_test(
-        r###"
+        r#"
             🍁"Autumn shows us how beautiful it is to let thing go."🍁
-        "###,
-        r###"
+        "#,
+        r#"
             Some(
                 String((
                     value: "Autumn shows us how beautiful it is to let thing go."
                 ))
             )
-        "###,
+        "#,
         |cursor: &mut Cursor| json_parser::parse(&mut *cursor),
     );
 }
@@ -55,16 +55,16 @@ fn test_parse_string() {
 #[test]
 fn test_parse_number() {
     run_parser_test(
-        r###"
+        r#"
             🍁1234🍁
-        "###,
-        r###"
+        "#,
+        r#"
             Some(
                 Number((
                     value: 1234,
                 ))
             )
-        "###,
+        "#,
         |cursor: &mut Cursor| json_parser::parse(&mut *cursor),
     );
 }
@@ -72,10 +72,10 @@ fn test_parse_number() {
 #[test]
 fn test_parse_array() {
     run_parser_test(
-        r###"
+        r#"
             🍁[1, 2, 3, 4]🍁
-        "###,
-        r###"
+        "#,
+        r#"
             Some(
                 Array((
                     elements: [
@@ -94,7 +94,7 @@ fn test_parse_array() {
                     ],
                 ))
             )
-        "###,
+        "#,
         |cursor: &mut Cursor| json_parser::parse(&mut *cursor),
     );
 }
@@ -102,10 +102,10 @@ fn test_parse_array() {
 #[test]
 fn test_parse_object() {
     run_parser_test(
-        r###"
+        r#"
             🍁{ "name":"John", "age":30, "car":null }🍁
-        "###,
-        r###"
+        "#,
+        r#"
             Some(
                 Object((
                     fields: [
@@ -128,7 +128,7 @@ fn test_parse_object() {
                     ],
                 ))
             )
-        "###,
+        "#,
         |cursor: &mut Cursor| json_parser::parse(&mut *cursor),
     );
 }
