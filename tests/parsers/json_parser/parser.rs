@@ -24,93 +24,101 @@ pub fn skip_ws(cursor: &mut Cursor) {
 pub fn parse_object(cursor: &mut Cursor) -> Option<ValueToken> {
     let checkpoint = cursor.clone();
 
-    if cursor.starts_with("{") {
-        cursor.next(1);
-    } else {
-        cursor.move_to(&checkpoint);
+    Some(())
+        .and_then(|_| {
+            if !cursor.starts_with("{") {
+                return None;
+            }
 
-        return None;
-    };
-
-    skip_ws(&mut *cursor);
-
-    let mut fields: Vec<FieldToken> = vec![];
-
-    while !cursor.starts_with("}") && !cursor.is_eof() {
-        skip_ws(&mut *cursor);
-
-        if let Some(field) = parse_field(&mut *cursor) {
-            fields.push(field);
+            cursor.next(1);
 
             skip_ws(&mut *cursor);
 
-            if cursor.starts_with("}") {
-                break;
+            let mut fields: Vec<FieldToken> = vec![];
+
+            while !cursor.starts_with("}") && !cursor.is_eof() {
+                skip_ws(&mut *cursor);
+
+                if let Some(field) = parse_field(&mut *cursor) {
+                    fields.push(field);
+
+                    skip_ws(&mut *cursor);
+
+                    if cursor.starts_with("}") {
+                        break;
+                    };
+
+                    if cursor.starts_with(",") {
+                        cursor.next(1);
+                    };
+                } else {
+                    break;
+                };
+            }
+
+            if !cursor.starts_with("}") {
+                return None;
             };
 
-            if cursor.starts_with(",") {
-                cursor.next(1);
-            };
-        } else {
-            break;
-        };
-    }
+            cursor.next(1);
 
-    if cursor.starts_with("}") {
-        cursor.next(1);
-    } else {
-        cursor.move_to(&checkpoint);
+            Some(ValueToken::Object(ObjectToken { fields }))
+        })
+        .or_else(|| {
+            cursor.move_to(&checkpoint);
 
-        return None;
-    };
-
-    Some(ValueToken::Object(ObjectToken { fields }))
+            return None;
+        })
 }
 
 pub fn parse_array(cursor: &mut Cursor) -> Option<ValueToken> {
     let checkpoint = cursor.clone();
 
-    if cursor.starts_with("[") {
-        cursor.next(1);
-    } else {
-        cursor.move_to(&checkpoint);
+    Some(())
+        .and_then(|_| {
+            if !cursor.starts_with("[") {
+                return None;
+            }
 
-        return None;
-    };
-
-    skip_ws(&mut *cursor);
-
-    let mut elements: Vec<ValueToken> = vec![];
-
-    while !cursor.starts_with("]") && !cursor.is_eof() {
-        skip_ws(&mut *cursor);
-
-        if let Some(element) = parse(&mut *cursor) {
-            elements.push(element);
+            cursor.next(1);
 
             skip_ws(&mut *cursor);
 
-            if cursor.starts_with("]") {
-                break;
-            };
+            let mut elements: Vec<ValueToken> = vec![];
 
-            if cursor.starts_with(",") {
-                cursor.next(1);
-            };
-        } else {
-            break;
-        };
-    }
+            while !cursor.starts_with("]") && !cursor.is_eof() {
+                skip_ws(&mut *cursor);
 
-    if cursor.starts_with("]") {
-        cursor.next(1);
-    } else {
-        cursor.move_to(&checkpoint);
+                if let Some(element) = parse(&mut *cursor) {
+                    elements.push(element);
 
-        return None;
-    };
+                    skip_ws(&mut *cursor);
 
-    Some(ValueToken::Array(ArrayToken { elements }))
+                    if cursor.starts_with("]") {
+                        break;
+                    };
+
+                    if cursor.starts_with(",") {
+                        cursor.next(1);
+                    };
+                } else {
+                    break;
+                };
+            }
+
+            if !cursor.starts_with("]") {
+                return None;
+            }
+
+            cursor.next(1);
+
+            Some(ValueToken::Array(ArrayToken { elements }))
+        })
+        .or_else(|| {
+            cursor.move_to(&checkpoint);
+
+            None
+        })
 }
 
 pub fn parse_field(cursor: &mut Cursor) -> Option<FieldToken> {
@@ -120,22 +128,22 @@ pub fn parse_field(cursor: &mut Cursor) -> Option<FieldToken> {
         .and_then(|name| {
             skip_ws(&mut *cursor);
 
-            if cursor.starts_with(":") {
-                cursor.next(1);
-
-                skip_ws(&mut *cursor);
-
-                if let Some(value) = parse(&mut *cursor) {
-                    skip_ws(&mut *cursor);
-
-                    return Some(FieldToken {
-                        name,
-                        value: Box::new(value),
-                    });
-                };
+            if !cursor.starts_with(":") {
+                return None;
             };
 
-            None
+            cursor.next(1);
+
+            skip_ws(&mut *cursor);
+
+            parse(&mut *cursor).map(|value| {
+                skip_ws(&mut *cursor);
+
+                FieldToken {
+                    name,
+                    value: Box::new(value),
+                }
+            })
         })
         .or_else(|| {
             cursor.move_to(&checkpoint);
@@ -160,8 +168,7 @@ pub fn parse_number(cursor: &mut Cursor) -> Option<ValueToken> {
 
     cursor
         .clone()
-        .find(&NUMBER_REGEX)
-        .filter(|mat| mat.start() == cursor.get_index())
+        .r#match(&NUMBER_REGEX)
         .and_then(|mat| {
             let value = mat.as_str();
 
@@ -187,8 +194,7 @@ pub fn parse_null(cursor: &mut Cursor) -> Option<ValueToken> {
 
     cursor
         .clone()
-        .find(&NULL_REGEX)
-        .filter(|mat| mat.start() == cursor.get_index())
+        .r#match(&NULL_REGEX)
         .and_then(|_| {
             cursor.next(4);
 

@@ -140,6 +140,14 @@ impl<'a> Cursor<'a> {
     pub fn find(&'a self, regex: &Regex) -> Option<Match<'a>> {
         regex.find_at(&self.doc, self.index)
     }
+
+    pub fn r#match(
+        &'a self,
+        regex: &Regex,
+    ) -> Option<Match<'a>> {
+        self.find(&regex)
+            .filter(|mat| mat.start() == self.index)
+    }
 }
 
 impl<'a> Clone for Cursor<'a> {
