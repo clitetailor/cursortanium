@@ -1,8 +1,8 @@
-use crate::cursor::Cursor;
-
 use std::borrow::Cow;
 use std::iter::IntoIterator;
 use std::vec::IntoIter;
+
+use crate::cursor::Cursor;
 
 pub struct CaptureResult<'a> {
     pub(in crate::test) doc: Cow<'a, str>,

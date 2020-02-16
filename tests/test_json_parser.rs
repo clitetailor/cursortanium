@@ -39,7 +39,7 @@ fn run_parser_test<
 fn test_parse_string() {
     run_parser_test(
         r#"
-            🍁"Autumn shows us how beautiful it is to let thing go."🍁
+            🧀"Autumn shows us how beautiful it is to let thing go."🧀
         "#,
         r#"
             Some(
@@ -56,7 +56,7 @@ fn test_parse_string() {
 fn test_parse_number() {
     run_parser_test(
         r#"
-            🍁1234🍁
+            🧀1234🧀
         "#,
         r#"
             Some(
@@ -73,7 +73,7 @@ fn test_parse_number() {
 fn test_parse_array() {
     run_parser_test(
         r#"
-            🍁[1, 2, 3, 4]🍁
+            🧀[1, 2, 3, 4]🧀
         "#,
         r#"
             Some(
@@ -103,7 +103,7 @@ fn test_parse_array() {
 fn test_parse_object() {
     run_parser_test(
         r#"
-            🍁{ "name":"John", "age":30, "car":null }🍁
+            🧀{ "name":"John", "age":30, "car":null }🧀
         "#,
         r#"
             Some(

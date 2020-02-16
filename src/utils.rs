@@ -1,6 +1,6 @@
 use crate::cursor::Cursor;
 
-pub fn parse_label(cursor: &mut Cursor) -> String {
+pub(in crate) fn parse_label(cursor: &mut Cursor) -> String {
     if cursor.starts_with("(") {
         return String::from("");
     };

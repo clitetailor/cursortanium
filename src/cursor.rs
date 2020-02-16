@@ -8,32 +8,12 @@ pub struct Cursor<'a> {
     end_index: usize,
 }
 
-impl<'a> From<String> for Cursor<'a> {
-    fn from(doc: String) -> Self {
-        let end_index = doc.chars().count();
-
-        Cursor {
-            doc: doc.into(),
-            index: 0,
-            end_index,
-        }
-    }
-}
-
-impl<'a> From<&'a String> for Cursor<'a> {
-    fn from(doc: &'a String) -> Self {
-        let end_index = doc.chars().count();
-
-        Cursor {
-            doc: doc.into(),
-            index: 0,
-            end_index,
-        }
-    }
-}
-
-impl<'a> From<Cow<'a, str>> for Cursor<'a> {
-    fn from(doc: Cow<'a, str>) -> Self {
+impl<'a, T> From<T> for Cursor<'a>
+where
+    T: Into<Cow<'a, str>>,
+{
+    fn from(doc: T) -> Self {
+        let doc = doc.into();
         let end_index = doc.chars().count();
 
         Cursor {

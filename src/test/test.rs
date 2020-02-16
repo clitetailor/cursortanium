@@ -1,8 +1,8 @@
+use std::borrow::Cow;
+
 use crate::cursor::Cursor;
 use crate::test::capture_result::CaptureResult;
 use crate::utils::parse_label;
-
-use std::borrow::Cow;
 
 pub struct Test<'a> {
     pub no_label: bool,
@@ -13,7 +13,7 @@ impl<'a> Test<'a> {
     pub fn new() -> Test<'a> {
         Test {
             no_label: true,
-            prefix: "🍁",
+            prefix: "🧀",
         }
     }
 
