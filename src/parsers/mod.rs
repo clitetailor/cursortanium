@@ -1,3 +1,3 @@
 pub mod json_parser;
 
-pub mod utils;
+mod utils;

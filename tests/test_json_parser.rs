@@ -1,10 +1,7 @@
 #[macro_use]
 extern crate lazy_static;
 
-mod parsers;
-
-use cursortanium::{capture, Cursor};
-use parsers::json_parser;
+use cursortanium::{capture, Cursor, parsers::json_parser};
 use ron::de;
 use std::rc::Rc;
 
@@ -105,7 +102,10 @@ fn test_parse_array() {
 fn test_parse_object() {
     run_parser_test(
         r#"
-            🧀{ "name":"John", "age":30, "car":null, "active":true }🧀
+            🧀{
+                "name": "Tim Carousel",
+                "age": 24
+            }🧀
         "#,
         r#"
             Some(
@@ -114,24 +114,14 @@ fn test_parse_object() {
                         FieldToken(
                             name: "name",
                             value: String((
-                                value: "John",
+                                value: "Tim Carousel",
                             )),
                         ),
                         FieldToken(
                             name: "age",
                             value: Number((
-                                value: 30,
+                                value: 24,
                             )),
-                        ),
-                        FieldToken(
-                            name: "car",
-                            value: Null(()),
-                        ),
-                        FieldToken(
-                            name: "active",
-                            value: Boolean((
-                                value: true,
-                            ))
                         )
                     ],
                 ))
