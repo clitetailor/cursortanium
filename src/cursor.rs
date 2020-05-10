@@ -85,15 +85,15 @@ impl<'a> Cursor<'a> {
 
     pub fn one_of<'b>(
         &self,
-        test_strs: &'b Vec<String>,
-    ) -> Option<&'b String> {
+        test_strs: &'b [&str],
+    ) -> Option<&'b str> {
         for test_str in test_strs {
             if self.starts_with(test_str) {
                 return Some(test_str);
             };
         }
 
-        return None;
+        None
     }
 
     pub fn lookahead(&self, count: usize) -> String {

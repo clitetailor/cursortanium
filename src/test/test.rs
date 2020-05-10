@@ -4,13 +4,14 @@ use crate::cursor::Cursor;
 use crate::test::capture_result::CaptureResult;
 use crate::utils::parse_label;
 
+#[derive(Default)]
 pub struct Test<'a> {
     pub no_label: bool,
     pub prefix: &'a str,
 }
 
 impl<'a> Test<'a> {
-    pub fn new() -> Test<'a> {
+    pub fn new() -> Self {
         Test {
             no_label: true,
             prefix: "🧀",

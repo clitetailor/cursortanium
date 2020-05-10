@@ -1,5 +1,6 @@
-use cursortanium::Cursor;
 use regex::Regex;
+
+use crate::Cursor;
 
 use super::super::utils;
 use super::tokens::{
@@ -16,7 +17,7 @@ pub fn parse(cursor: &mut Cursor) -> Option<ValueToken> {
 }
 
 pub fn skip_ws(cursor: &mut Cursor) {
-    while cursor.starts_with(" ") {
+    while cursor.one_of(&[" ", "\t", "\r", "\n"]) != None {
         cursor.next(1);
     }
 }
@@ -63,7 +64,7 @@ pub fn parse_object(cursor: &mut Cursor) -> Option<ValueToken> {
     .or_else(|| {
         cursor.move_to(&checkpoint);
 
-        return None;
+        None
     })
 }
 
@@ -145,9 +146,8 @@ pub fn parse_field(cursor: &mut Cursor) -> Option<FieldToken> {
 }
 
 pub fn parse_string(cursor: &mut Cursor) -> Option<ValueToken> {
-    utils::parse_string(&mut *cursor).and_then(|value| {
-        Some(ValueToken::String(StringToken { value }))
-    })
+    utils::parse_string(&mut *cursor)
+        .map(|value| ValueToken::String(StringToken { value }))
 }
 
 lazy_static! {
