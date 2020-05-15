@@ -1,5 +1,3 @@
-use regex::Regex;
-
 use crate::Cursor;
 
 use super::super::utils;
@@ -9,11 +7,23 @@ use super::tokens::{
 };
 
 pub fn parse(cursor: &mut Cursor) -> Option<ValueToken> {
-    parse_null(&mut *cursor)
-        .or_else(|| parse_string(&mut *cursor))
-        .or_else(|| parse_number(&mut *cursor))
-        .or_else(|| parse_array(&mut *cursor))
-        .or_else(|| parse_object(&mut *cursor))
+    if cursor.starts_with("[") {
+        return parse_array(&mut *cursor);
+    }
+
+    if cursor.starts_with("{") {
+        return parse_object(&mut *cursor);
+    }
+
+    if cursor.starts_with("n") {
+        return parse_null(&mut *cursor);
+    }
+
+    if cursor.starts_with("\"") {
+        return parse_string(&mut *cursor);
+    }
+
+    return parse_number(&mut *cursor);
 }
 
 pub fn skip_ws(cursor: &mut Cursor) {
@@ -150,51 +160,67 @@ pub fn parse_string(cursor: &mut Cursor) -> Option<ValueToken> {
         .map(|value| ValueToken::String(StringToken { value }))
 }
 
-lazy_static! {
-    static ref NUMBER_REGEX: Regex =
-        Regex::new("[0-9]+").unwrap();
+const DIGITS: &[&str] =
+    &["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
+
+pub fn is_number(cursor: &Cursor) -> bool {
+    if cursor.one_of(&DIGITS).is_some() {
+        true
+    } else {
+        false
+    }
 }
 
 pub fn parse_number(cursor: &mut Cursor) -> Option<ValueToken> {
     let checkpoint = cursor.clone();
 
-    cursor
-        .clone()
-        .r#match(&NUMBER_REGEX)
-        .and_then(|mat| {
-            let value = mat.as_str();
+    None.or_else(|| {
+        if cursor.starts_with("-") {
+            cursor.next(1);
+        };
 
-            cursor.next(value.chars().count());
+        if is_number(&cursor) {
+            cursor.next(1);
+        } else {
+            return None;
+        }
 
-            let value: isize = value.parse().ok()?;
+        while is_number(&cursor) {
+            cursor.next(1);
+        }
 
-            Some(ValueToken::Number(NumberToken { value }))
-        })
-        .or_else(|| {
-            cursor.move_to(&checkpoint);
+        if cursor.starts_with(".") {
+            cursor.next(1);
 
-            None
-        })
-}
+            if is_number(&cursor) {
+                cursor.next(1);
+            } else {
+                return None;
+            }
 
-lazy_static! {
-    static ref NULL_REGEX: Regex = Regex::new("null").unwrap();
+            while is_number(&*cursor) {
+                cursor.next(1);
+            }
+        }
+
+        let value: f64 =
+            checkpoint.take_until(&cursor).parse().ok()?;
+
+        Some(ValueToken::Number(NumberToken { value }))
+    })
+    .or_else(|| {
+        cursor.move_to(&checkpoint);
+
+        None
+    })
 }
 
 pub fn parse_null(cursor: &mut Cursor) -> Option<ValueToken> {
-    let checkpoint = cursor.clone();
+    if cursor.starts_with("null") {
+        cursor.next(4);
 
-    cursor
-        .clone()
-        .r#match(&NULL_REGEX)
-        .and_then(|_| {
-            cursor.next(4);
+        return Some(ValueToken::Null(NullToken));
+    }
 
-            Some(ValueToken::Null(NullToken))
-        })
-        .or_else(|| {
-            cursor.move_to(&checkpoint);
-
-            None
-        })
+    return None;
 }

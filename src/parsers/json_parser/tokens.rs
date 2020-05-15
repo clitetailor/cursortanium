@@ -32,7 +32,7 @@ pub struct StringToken {
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct NumberToken {
-    pub value: isize,
+    pub value: f64,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]

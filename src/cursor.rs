@@ -14,7 +14,7 @@ where
 {
     fn from(doc: T) -> Self {
         let doc = doc.into();
-        let end_index = doc.chars().count();
+        let end_index = doc.len();
 
         Cursor {
             doc,
@@ -30,7 +30,7 @@ impl<'a> Cursor<'a> {
         index: usize,
     ) -> Cursor<'a> {
         let doc = doc.into();
-        let end_index = doc.chars().count();
+        let end_index = doc.len();
 
         Cursor {
             doc,
@@ -73,14 +73,9 @@ impl<'a> Cursor<'a> {
 
     pub fn starts_with(&self, test_str: &str) -> bool {
         let start = self.index;
-        let count = test_str.chars().count();
+        let count = test_str.len();
 
-        self.doc
-            .chars()
-            .skip(start)
-            .take(count)
-            .collect::<String>()
-            == test_str
+        self.doc[start..(start + count)] == *test_str
     }
 
     pub fn one_of<'b>(
@@ -99,14 +94,14 @@ impl<'a> Cursor<'a> {
     pub fn lookahead(&self, count: usize) -> String {
         let start = self.index;
 
-        self.doc.chars().skip(start).take(count).collect()
+        self.doc[start..(start + count)].to_owned()
     }
 
     pub fn take_until(&self, cursor: &Cursor) -> String {
         let start = self.index;
         let count = cursor.get_index() - start;
 
-        self.doc.chars().skip(start).take(count).collect()
+        self.doc[start..(start + count)].to_owned()
     }
 
     pub fn move_to(&mut self, cursor: &Cursor) {
@@ -133,7 +128,7 @@ impl<'a> Cursor<'a> {
 impl<'a> Clone for Cursor<'a> {
     fn clone(&self) -> Self {
         Cursor {
-            doc: self.doc.to_owned(),
+            doc: self.doc.clone(),
             index: self.index,
             end_index: self.end_index,
         }

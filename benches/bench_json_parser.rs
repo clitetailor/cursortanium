@@ -2,44 +2,45 @@
 
 extern crate test;
 
-use cursortanium::{
-    helpers::run_parser_test, parsers::json_parser, Cursor
-};
+extern crate pest;
+extern crate pest_grammars;
+
+use cursortanium::{parsers::json_parser, Cursor};
+use pest::Parser;
+use pest_grammars::json::*;
+use serde_json;
+use serde_json::Value;
 use test::Bencher;
 
+const DATA: &str = include_str!("../assets/canada.json");
+
 #[bench]
-fn bench_json_parser(b: &mut Bencher) {
+fn bench_cursortanium_json_parser(b: &mut Bencher) {
     b.iter(|| {
-        run_parser_test(
-            r#"
-                🧀{
-                    "name": "Lia",
-                    "age": 18
-                }🧀
-            "#,
-            r#"
-                Some(
-                    Object((
-                        fields: [
-                            FieldToken(
-                                name: "name",
-                                value: String((
-                                    value: "Lia"
-                                )),
-                            ),
-                            FieldToken(
-                                name: "age",
-                                value: Number((
-                                    value: 18
-                                )),
-                            ),
-                        ],
-                    ))
-                )
-            "#,
-            |cursor: &mut Cursor| {
-                json_parser::parse(&mut *cursor)
-            },
-        );
+        let ast = json_parser::parse(&mut Cursor::from(DATA));
+
+        ast
+    });
+}
+
+#[bench]
+fn bench_serde_json_parser(b: &mut Bencher) {
+    b.iter(|| {
+        let value: Option<Value> =
+            serde_json::from_str(DATA).ok();
+
+        value
+    });
+}
+
+#[bench]
+fn bench_pest_json_parser(b: &mut Bencher) {
+    b.iter(|| {
+        let tokens: Vec<_> =
+            JsonParser::parse(Rule::json, DATA)
+                .unwrap()
+                .collect();
+
+        tokens
     });
 }
