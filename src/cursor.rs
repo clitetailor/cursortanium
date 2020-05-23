@@ -1,46 +1,41 @@
-use regex::{Match, Regex};
-use std::borrow::Cow;
+use std::rc::Rc;
 
 #[derive(Debug)]
-pub struct Cursor<'a> {
-    doc: Cow<'a, str>,
+pub struct Cursor {
+    doc: Rc<str>,
     index: usize,
     end_index: usize,
 }
 
-impl<'a, T> From<T> for Cursor<'a>
+impl<'a, T> From<T> for Cursor
 where
-    T: Into<Cow<'a, str>>,
+    T: AsRef<str>,
 {
     fn from(doc: T) -> Self {
-        let doc = doc.into();
+        let doc = doc.as_ref();
         let end_index = doc.len();
 
         Cursor {
-            doc,
+            doc: Rc::from(doc),
             index: 0,
             end_index,
         }
     }
 }
 
-impl<'a> Cursor<'a> {
-    pub fn from_string_at<T: Into<Cow<'a, str>>>(
+impl Cursor {
+    pub fn from_string_at<T: AsRef<str>>(
         doc: T,
         index: usize,
-    ) -> Cursor<'a> {
-        let doc = doc.into();
+    ) -> Cursor {
+        let doc = doc.as_ref();
         let end_index = doc.len();
 
         Cursor {
-            doc,
+            doc: Rc::from(doc),
             index,
             end_index,
         }
-    }
-
-    pub fn get_doc(&self) -> &Cow<'a, str> {
-        &self.doc
     }
 
     pub fn get_index(&self) -> usize {
@@ -111,24 +106,12 @@ impl<'a> Cursor<'a> {
             self.end_index
         };
     }
-
-    pub fn find(&'a self, regex: &Regex) -> Option<Match<'a>> {
-        regex.find_at(&self.doc, self.index)
-    }
-
-    pub fn r#match(
-        &'a self,
-        regex: &Regex,
-    ) -> Option<Match<'a>> {
-        self.find(&regex)
-            .filter(|mat| mat.start() == self.index)
-    }
 }
 
-impl<'a> Clone for Cursor<'a> {
+impl<'a> Clone for Cursor {
     fn clone(&self) -> Self {
         Cursor {
-            doc: self.doc.clone(),
+            doc: Rc::clone(&self.doc),
             index: self.index,
             end_index: self.end_index,
         }

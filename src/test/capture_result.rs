@@ -10,7 +10,7 @@ pub struct CaptureResult<'a> {
 }
 
 impl<'a> IntoIterator for CaptureResult<'a> {
-    type Item = Cursor<'a>;
+    type Item = Cursor;
     type IntoIter = IntoIter<Self::Item>;
 
     fn into_iter(self) -> Self::IntoIter {
