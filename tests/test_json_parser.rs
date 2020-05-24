@@ -10,9 +10,7 @@ fn test_parse_string() {
         "#,
         r#"
             Some(
-                String((
-                    value: "Autumn shows us how beautiful it is to let thing go."
-                ))
+                String("Autumn shows us how beautiful it is to let thing go.")
             )
         "#,
         |cursor: &mut Cursor| json_parser::parse(&mut *cursor),
@@ -27,9 +25,7 @@ fn test_parse_number() {
         "#,
         r#"
             Some(
-                Number((
-                    value: 1234,
-                ))
+                Number(1234)
             )
         "#,
         |cursor: &mut Cursor| json_parser::parse(&mut *cursor),
@@ -44,22 +40,12 @@ fn test_parse_array() {
         "#,
         r#"
             Some(
-                Array((
-                    elements: [
-                        Number((
-                            value: 1,
-                        )),
-                        Number((
-                            value: 2,
-                        )),
-                        Number((
-                            value: 3,
-                        )),
-                        Number((
-                            value: 4,
-                        )),
-                    ],
-                ))
+                Array([
+                    Number(1),
+                    Number(2),
+                    Number(3),
+                    Number(4),
+                ])
             )
         "#,
         |cursor: &mut Cursor| json_parser::parse(&mut *cursor),
@@ -77,22 +63,10 @@ fn test_parse_object() {
         "#,
         r#"
             Some(
-                Object((
-                    fields: [
-                        FieldToken(
-                            name: "name",
-                            value: String((
-                                value: "Tim Carousel",
-                            )),
-                        ),
-                        FieldToken(
-                            name: "age",
-                            value: Number((
-                                value: 24,
-                            )),
-                        )
-                    ],
-                ))
+                Object([
+                    ("name", String("Tim Carousel")),
+                    ("age", Number(24))
+                ])
             )
         "#,
         |cursor: &mut Cursor| json_parser::parse(&mut *cursor),

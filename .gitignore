@@ -5,3 +5,6 @@
 
 /ccov.zip
 /lcov.info
+
+/perf.data
+/perf.data.old

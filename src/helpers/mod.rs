@@ -5,7 +5,7 @@ use crate::Cursor;
 use ron::de;
 
 pub fn run_parser_test<
-    T: Fn(&mut Cursor) -> Option<json_parser::ValueToken>,
+    T: Fn(&mut Cursor) -> Option<json_parser::Value>,
 >(
     input: &str,
     expect: &str,
@@ -23,11 +23,9 @@ pub fn run_parser_test<
 
     let ast = parse(&mut cursor);
 
-    let expect: Option<json_parser::ValueToken> =
-        de::from_str::<Option<json_parser::ValueToken>>(
-            &expect,
-        )
-        .unwrap();
+    let expect: Option<json_parser::Value> =
+        de::from_str::<Option<json_parser::Value>>(&expect)
+            .unwrap();
 
     assert_eq!(ast, expect);
 }

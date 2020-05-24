@@ -38,6 +38,10 @@ impl Cursor {
         }
     }
 
+    pub fn get_char(&self) -> Option<char> {
+        self.doc[self.index..].chars().next()
+    }
+
     pub fn get_index(&self) -> usize {
         self.index
     }
@@ -70,7 +74,7 @@ impl Cursor {
         let start = self.index;
         let count = test_str.len();
 
-        self.doc[start..(start + count)] == *test_str
+        &self.doc[start..(start + count)] == test_str
     }
 
     pub fn one_of<'b>(
