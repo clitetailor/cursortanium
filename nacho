@@ -1,0 +1,33 @@
+#!/bin/bash
+
+USAGE="
+Usage
+  \$ $0 build
+
+Commands
+  help            Print help message
+  build           Build the binary executable
+  test            Run tests
+  bench           Run benchmark tests
+
+Options
+  -h, --help      Print help message
+"
+
+case $1 in
+  -h | --help | help)
+    echo "$USAGE"
+  ;;
+
+  build)
+    cargo build
+  ;;
+
+  test)
+    cargo test
+  ;;
+
+  bench)
+    cargo +nightly bench
+  ;;
+esac
