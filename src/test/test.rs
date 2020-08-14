@@ -35,7 +35,7 @@ impl<'a> Test<'a> {
 
         while !cursor.is_eof() {
             if cursor.starts_with(&self.prefix) {
-                chunks.push(marker.take_until(&cursor));
+                chunks.push(marker.take_until(&cursor).to_owned());
                 marker = cursor.clone();
 
                 cursor.next(prefix_len);
@@ -56,7 +56,7 @@ impl<'a> Test<'a> {
             };
         }
 
-        chunks.push(marker.take_until(&cursor));
+        chunks.push(marker.take_until(&cursor).to_owned());
 
         let doc = chunks.concat().into();
 

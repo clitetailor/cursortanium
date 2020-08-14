@@ -42,6 +42,10 @@ impl Cursor {
         self.doc[self.index..].chars().next()
     }
 
+    pub fn get_doc(&self) -> &str {
+        &self.doc
+    }
+
     pub fn get_index(&self) -> usize {
         self.index
     }
@@ -90,17 +94,17 @@ impl Cursor {
         None
     }
 
-    pub fn lookahead(&self, count: usize) -> String {
+    pub fn lookahead(&self, count: usize) -> &str {
         let start = self.index;
 
-        self.doc[start..(start + count)].to_owned()
+        &self.doc[start..(start + count)]
     }
 
-    pub fn take_until(&self, cursor: &Cursor) -> String {
+    pub fn take_until(&self, cursor: &Cursor) -> &str {
         let start = self.index;
         let count = cursor.get_index() - start;
 
-        self.doc[start..(start + count)].to_owned()
+        &self.doc[start..(start + count)]
     }
 
     pub fn move_to(&mut self, cursor: &Cursor) {

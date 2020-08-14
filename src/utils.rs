@@ -18,5 +18,5 @@ pub(in crate) fn parse_label(cursor: &mut Cursor) -> String {
         cursor.next(1);
     }
 
-    name
+    name.to_owned()
 }

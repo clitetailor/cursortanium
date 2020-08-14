@@ -12,7 +12,7 @@ pub fn parse_string(cursor: &mut Cursor) -> Option<String> {
     };
 
     let mut marker = cursor.clone();
-    let mut chunks: Vec<String> = vec![];
+    let mut chunks: Vec<&str> = vec![];
 
     marker.move_to(&cursor);
 
@@ -22,9 +22,9 @@ pub fn parse_string(cursor: &mut Cursor) -> Option<String> {
             cursor.next(1);
 
             if cursor.starts_with("n") {
-                chunks.push(String::from("\n"));
+                chunks.push("\n");
             } else if cursor.starts_with("t") {
-                chunks.push(String::from("\t"));
+                chunks.push("\t");
             } else {
                 chunks.push(cursor.lookahead(1));
             }

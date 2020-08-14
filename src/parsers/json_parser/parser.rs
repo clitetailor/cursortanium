@@ -141,7 +141,7 @@ pub fn parse_field(cursor: &mut Cursor) -> Option<Field> {
 
             parse(&mut *cursor).map(|value| {
                 skip_ws(&mut *cursor);
-                Field(name, Box::new(value))
+                Field(name.to_owned(), Box::new(value))
             })
         })
         .or_else(|| {
@@ -153,7 +153,7 @@ pub fn parse_field(cursor: &mut Cursor) -> Option<Field> {
 
 pub fn parse_string(cursor: &mut Cursor) -> Option<Value> {
     utils::parse_string(&mut *cursor)
-        .map(|value| Value::String(value))
+        .map(|value| Value::String(value.to_owned()))
 }
 
 pub fn is_number(cursor: &Cursor) -> bool {
@@ -195,9 +195,9 @@ pub fn parse_number(cursor: &mut Cursor) -> Option<Value> {
             }
         }
 
-        let value: String = checkpoint.take_until(&cursor);
+        let value: &str = checkpoint.take_until(&cursor);
 
-        Some(Value::Number(value))
+        Some(Value::Number(value.to_owned()))
     })
     .or_else(|| {
         cursor.move_to(&checkpoint);
