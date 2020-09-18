@@ -1,8 +1,6 @@
-<h1 align="center">
-  cursortanium
-</h1>
+# cursortanium
 
-<p align="center">A solid cursor for Rust</p> 
+A solid cursor for Rust
 
 ## Why cursortanium?
 

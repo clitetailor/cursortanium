@@ -1,19 +1,16 @@
 use regex::{Match, Regex};
-use std::borrow::Cow;
+use std::rc::Rc;
 
 #[derive(Debug)]
-pub struct Cursor<'a> {
-    doc: Cow<'a, str>,
+pub struct Cursor {
+    doc: Rc<String>,
     index: usize,
     end_index: usize,
 }
 
-impl<'a, T> From<T> for Cursor<'a>
-where
-    T: Into<Cow<'a, str>>,
-{
-    fn from(doc: T) -> Self {
-        let doc = doc.into();
+impl From<&Rc<String>> for Cursor {
+    fn from(doc: &Rc<String>) -> Self {
+        let doc = doc.clone();
         let end_index = doc.chars().count();
 
         Cursor {
@@ -24,12 +21,12 @@ where
     }
 }
 
-impl<'a> Cursor<'a> {
-    pub fn from_string_at<T: Into<Cow<'a, str>>>(
-        doc: T,
+impl Cursor {
+    pub fn from_string_at(
+        doc: &Rc<String>,
         index: usize,
-    ) -> Cursor<'a> {
-        let doc = doc.into();
+    ) -> Cursor {
+        let doc = doc.clone();
         let end_index = doc.chars().count();
 
         Cursor {
@@ -39,8 +36,8 @@ impl<'a> Cursor<'a> {
         }
     }
 
-    pub fn get_doc(&self) -> &Cow<'a, str> {
-        &self.doc
+    pub fn get_doc(&self) -> Rc<String> {
+        self.doc.clone()
     }
 
     pub fn get_index(&self) -> usize {
@@ -83,10 +80,10 @@ impl<'a> Cursor<'a> {
             == test_str
     }
 
-    pub fn one_of<'b>(
+    pub fn one_of<'a>(
         &self,
-        test_strs: &'b Vec<String>,
-    ) -> Option<&'b String> {
+        test_strs: &'a Vec<String>,
+    ) -> Option<&'a String> {
         for test_str in test_strs {
             if self.starts_with(test_str) {
                 return Some(test_str);
@@ -117,23 +114,20 @@ impl<'a> Cursor<'a> {
         };
     }
 
-    pub fn find(&'a self, regex: &Regex) -> Option<Match<'a>> {
+    pub fn find(&self, regex: &Regex) -> Option<Match> {
         regex.find_at(&self.doc, self.index)
     }
 
-    pub fn r#match(
-        &'a self,
-        regex: &Regex,
-    ) -> Option<Match<'a>> {
+    pub fn r#match(&self, regex: &Regex) -> Option<Match> {
         self.find(&regex)
             .filter(|mat| mat.start() == self.index)
     }
 }
 
-impl<'a> Clone for Cursor<'a> {
+impl Clone for Cursor {
     fn clone(&self) -> Self {
         Cursor {
-            doc: self.doc.to_owned(),
+            doc: self.doc.clone(),
             index: self.index,
             end_index: self.end_index,
         }

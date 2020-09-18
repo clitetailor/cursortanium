@@ -1,10 +1,8 @@
-use std::borrow::Cow;
+use std::rc::Rc;
 
 use crate::test::capture_result::CaptureResult;
 use crate::test::test::Test;
 
-pub fn capture<'a, T: Into<Cow<'a, str>>>(
-    input: T,
-) -> CaptureResult<'a> {
-    Test::new().capture(input)
+pub fn capture(input: &Rc<String>) -> CaptureResult {
+    Test::new().capture(&input)
 }

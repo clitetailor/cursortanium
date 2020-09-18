@@ -6,6 +6,7 @@ mod parsers;
 use cursortanium::{capture, Cursor};
 use parsers::json_parser;
 use ron::de;
+use std::rc::Rc;
 
 fn run_parser_test<
     T: Fn(&mut Cursor) -> Option<json_parser::ValueToken>,
@@ -14,7 +15,8 @@ fn run_parser_test<
     expect: &str,
     parse: T,
 ) {
-    let mut iter = capture(input).into_iter();
+    let mut iter =
+        capture(&Rc::new(String::from(input))).into_iter();
 
     let cursor = iter.next();
     let target = iter.next();

@@ -1,28 +1,23 @@
-use std::borrow::Cow;
+use std::rc::Rc;
 
 use crate::cursor::Cursor;
 use crate::test::capture_result::CaptureResult;
 use crate::utils::parse_label;
 
-pub struct Test<'a> {
+pub struct Test {
     pub no_label: bool,
-    pub prefix: &'a str,
+    pub prefix: Rc<String>,
 }
 
-impl<'a> Test<'a> {
-    pub fn new() -> Test<'a> {
+impl Test {
+    pub fn new() -> Test {
         Test {
             no_label: true,
-            prefix: "🧀",
+            prefix: Rc::new(String::from("🧀")),
         }
     }
 
-    pub fn capture<'b, T: Into<Cow<'b, str>>>(
-        &self,
-        input: T,
-    ) -> CaptureResult<'b> {
-        let input = input.into();
-
+    pub fn capture(&self, input: &Rc<String>) -> CaptureResult {
         let mut chunks: Vec<String> = vec![];
         let mut indices: Vec<(String, usize)> = vec![];
         let mut offset: usize = 0;
