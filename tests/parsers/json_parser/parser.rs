@@ -3,8 +3,8 @@ use regex::Regex;
 
 use super::super::utils;
 use super::tokens::{
-    ArrayToken, FieldToken, NullToken, NumberToken,
-    ObjectToken, StringToken, ValueToken,
+    ArrayToken, BooleanToken, FieldToken, NullToken,
+    NumberToken, ObjectToken, StringToken, ValueToken,
 };
 
 pub fn parse(cursor: &mut Cursor) -> Option<ValueToken> {
@@ -13,6 +13,7 @@ pub fn parse(cursor: &mut Cursor) -> Option<ValueToken> {
         .or_else(|| parse_number(&mut *cursor))
         .or_else(|| parse_array(&mut *cursor))
         .or_else(|| parse_object(&mut *cursor))
+        .or_else(|| parse_boolean(&mut *cursor))
 }
 
 pub fn skip_ws(cursor: &mut Cursor) {
@@ -179,6 +180,38 @@ pub fn parse_number(cursor: &mut Cursor) -> Option<ValueToken> {
 
 lazy_static! {
     static ref NULL_REGEX: Regex = Regex::new("null").unwrap();
+    static ref TRUE_REGEX: Regex = Regex::new("true").unwrap();
+    static ref FALSE_REGEX: Regex =
+        Regex::new("false").unwrap();
+}
+
+pub fn parse_boolean(
+    cursor: &mut Cursor,
+) -> Option<ValueToken> {
+    let checkpoint = cursor.clone();
+
+    cursor
+        .clone()
+        .r#match(&TRUE_REGEX)
+        .and_then(|_| {
+            cursor.next(4);
+
+            Some(ValueToken::Boolean(BooleanToken {
+                value: true,
+            }))
+        })
+        .or_else(|| {
+            cursor.next(5);
+
+            Some(ValueToken::Boolean(BooleanToken {
+                value: false,
+            }))
+        })
+        .or_else(|| {
+            cursor.move_to(&checkpoint);
+
+            None
+        })
 }
 
 pub fn parse_null(cursor: &mut Cursor) -> Option<ValueToken> {

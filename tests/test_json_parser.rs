@@ -105,7 +105,7 @@ fn test_parse_array() {
 fn test_parse_object() {
     run_parser_test(
         r#"
-            🧀{ "name":"John", "age":30, "car":null }🧀
+            🧀{ "name":"John", "age":30, "car":null, "active":true }🧀
         "#,
         r#"
             Some(
@@ -127,6 +127,12 @@ fn test_parse_object() {
                             name: "car",
                             value: Null(()),
                         ),
+                        FieldToken(
+                            name: "active",
+                            value: Boolean((
+                                value: true,
+                            ))
+                        )
                     ],
                 ))
             )

@@ -6,6 +6,7 @@ pub enum ValueToken {
     Array(ArrayToken),
     String(StringToken),
     Number(NumberToken),
+    Boolean(BooleanToken),
     Null(NullToken),
 }
 
@@ -33,6 +34,11 @@ pub struct StringToken {
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct NumberToken {
     pub value: isize,
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
+pub struct BooleanToken {
+    pub value: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
