@@ -21,6 +21,32 @@ impl From<&Rc<String>> for Cursor {
     }
 }
 
+impl From<String> for Cursor {
+    fn from(doc: String) -> Self {
+        let doc = Rc::new(doc);
+        let end_index = doc.chars().count();
+
+        Cursor {
+            doc,
+            index: 0,
+            end_index,
+        }
+    }
+}
+
+impl From<&str> for Cursor {
+    fn from(doc: &str) -> Self {
+        let doc = Rc::new(String::from(doc));
+        let end_index = doc.chars().count();
+
+        Cursor {
+            doc,
+            index: 0,
+            end_index,
+        }
+    }
+}
+
 impl Cursor {
     pub fn from_string_at(
         doc: &Rc<String>,
@@ -77,33 +103,41 @@ impl Cursor {
             .skip(start)
             .take(count)
             .collect::<String>()
-            == test_str
+            == *test_str
     }
 
     pub fn one_of<'a>(
         &self,
-        test_strs: &'a Vec<String>,
-    ) -> Option<&'a String> {
+        test_strs: &'a Vec<&str>,
+    ) -> Option<&'a str> {
         for test_str in test_strs {
             if self.starts_with(test_str) {
                 return Some(test_str);
             };
         }
 
-        return None;
+        None
     }
 
     pub fn lookahead(&self, count: usize) -> String {
         let start = self.index;
 
-        self.doc.chars().skip(start).take(count).collect()
+        self.doc
+            .chars()
+            .skip(start)
+            .take(count)
+            .collect::<String>()
     }
 
     pub fn take_until(&self, cursor: &Cursor) -> String {
         let start = self.index;
         let count = cursor.get_index() - start;
 
-        self.doc.chars().skip(start).take(count).collect()
+        self.doc
+            .chars()
+            .skip(start)
+            .take(count)
+            .collect::<String>()
     }
 
     pub fn move_to(&mut self, cursor: &Cursor) {

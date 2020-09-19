@@ -1,11 +1,18 @@
-use cursortanium::Cursor;
-use regex::Regex;
+use crate::Cursor;
 
 use super::super::utils;
 use super::tokens::{
     ArrayToken, BooleanToken, FieldToken, NullToken,
     NumberToken, ObjectToken, StringToken, ValueToken,
 };
+
+lazy_static! {
+    static ref WHITESPACES: std::vec::Vec<&'static str> =
+        Vec::from([" ", "\t", "\r", "\n"]);
+    static ref DIGITS: Vec<&'static str> = Vec::from([
+        "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
+    ]);
+}
 
 pub fn parse(cursor: &mut Cursor) -> Option<ValueToken> {
     parse_null(&mut *cursor)
@@ -17,7 +24,7 @@ pub fn parse(cursor: &mut Cursor) -> Option<ValueToken> {
 }
 
 pub fn skip_ws(cursor: &mut Cursor) {
-    while cursor.starts_with(" ") {
+    while cursor.one_of(&WHITESPACES) != None {
         cursor.next(1);
     }
 }
@@ -64,7 +71,7 @@ pub fn parse_object(cursor: &mut Cursor) -> Option<ValueToken> {
     .or_else(|| {
         cursor.move_to(&checkpoint);
 
-        return None;
+        None
     })
 }
 
@@ -146,88 +153,90 @@ pub fn parse_field(cursor: &mut Cursor) -> Option<FieldToken> {
 }
 
 pub fn parse_string(cursor: &mut Cursor) -> Option<ValueToken> {
-    utils::parse_string(&mut *cursor).and_then(|value| {
-        Some(ValueToken::String(StringToken { value }))
-    })
+    utils::parse_string(&mut *cursor)
+        .map(|value| ValueToken::String(StringToken { value }))
 }
 
-lazy_static! {
-    static ref NUMBER_REGEX: Regex =
-        Regex::new("[0-9]+").unwrap();
+pub fn is_number(cursor: &Cursor) -> bool {
+    if cursor.one_of(&DIGITS).is_some() {
+        true
+    } else {
+        false
+    }
 }
 
 pub fn parse_number(cursor: &mut Cursor) -> Option<ValueToken> {
     let checkpoint = cursor.clone();
 
-    cursor
-        .clone()
-        .r#match(&NUMBER_REGEX)
-        .and_then(|mat| {
-            let value = mat.as_str();
+    None.or_else(|| {
+        if cursor.starts_with("-") {
+            cursor.next(1);
+        };
 
-            cursor.next(value.chars().count());
+        if is_number(&cursor) {
+            cursor.next(1);
+        } else {
+            return None;
+        }
 
-            let value: isize = value.parse().ok()?;
+        while is_number(&cursor) {
+            cursor.next(1);
+        }
 
-            Some(ValueToken::Number(NumberToken { value }))
-        })
-        .or_else(|| {
-            cursor.move_to(&checkpoint);
+        if cursor.starts_with(".") {
+            cursor.next(1);
 
-            None
-        })
-}
+            if is_number(&cursor) {
+                cursor.next(1);
+            } else {
+                return None;
+            }
 
-lazy_static! {
-    static ref NULL_REGEX: Regex = Regex::new("null").unwrap();
-    static ref TRUE_REGEX: Regex = Regex::new("true").unwrap();
-    static ref FALSE_REGEX: Regex =
-        Regex::new("false").unwrap();
+            while is_number(&*cursor) {
+                cursor.next(1);
+            }
+        }
+
+        let value: f64 =
+            checkpoint.take_until(&cursor).parse().ok()?;
+
+        Some(ValueToken::Number(NumberToken { value }))
+    })
+    .or_else(|| {
+        cursor.move_to(&checkpoint);
+
+        None
+    })
 }
 
 pub fn parse_boolean(
     cursor: &mut Cursor,
 ) -> Option<ValueToken> {
-    let checkpoint = cursor.clone();
+    if cursor.starts_with("true") {
+        cursor.next(4);
 
-    cursor
-        .clone()
-        .r#match(&TRUE_REGEX)
-        .and_then(|_| {
-            cursor.next(4);
+        return Some(ValueToken::Boolean(BooleanToken {
+            value: true,
+        }));
+    }
 
-            Some(ValueToken::Boolean(BooleanToken {
-                value: true,
-            }))
-        })
-        .or_else(|| {
-            cursor.next(5);
+    if cursor.starts_with("false") {
+        cursor.next(5);
 
-            Some(ValueToken::Boolean(BooleanToken {
-                value: false,
-            }))
-        })
-        .or_else(|| {
-            cursor.move_to(&checkpoint);
+        return Some(ValueToken::Boolean(BooleanToken {
+            value: false,
+        }));
+    }
 
-            None
-        })
+    return None;
 }
 
 pub fn parse_null(cursor: &mut Cursor) -> Option<ValueToken> {
-    let checkpoint = cursor.clone();
+    if cursor.starts_with("null") {
+        cursor.next(4);
 
-    cursor
-        .clone()
-        .r#match(&NULL_REGEX)
-        .and_then(|_| {
-            cursor.next(4);
+        return Some(ValueToken::Null(NullToken));
+    }
 
-            Some(ValueToken::Null(NullToken))
-        })
-        .or_else(|| {
-            cursor.move_to(&checkpoint);
-
-            None
-        })
+    return None;
 }
