@@ -1,4 +1,4 @@
-use cursortanium::Cursor;
+use crate::cursor::Cursor;
 use regex::Regex;
 
 use super::super::utils;
@@ -16,8 +16,13 @@ pub fn parse(cursor: &mut Cursor) -> Option<ValueToken> {
         .or_else(|| parse_boolean(&mut *cursor))
 }
 
+lazy_static! {
+    static ref WHITESPACE: &'static [&'static str] =
+        &[" ", "\t", "\n", "\r"];
+}
+
 pub fn skip_ws(cursor: &mut Cursor) {
-    while cursor.starts_with(" ") {
+    while cursor.one_of(&WHITESPACE).is_some() {
         cursor.next(1);
     }
 }

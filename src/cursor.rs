@@ -82,8 +82,8 @@ impl Cursor {
 
     pub fn one_of<'a>(
         &self,
-        test_strs: &'a Vec<String>,
-    ) -> Option<&'a String> {
+        test_strs: &'a [&str],
+    ) -> Option<&'a str> {
         for test_str in test_strs {
             if self.starts_with(test_str) {
                 return Some(test_str);

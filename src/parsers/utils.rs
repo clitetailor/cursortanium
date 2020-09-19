@@ -1,4 +1,4 @@
-use cursortanium::Cursor;
+use crate::cursor::Cursor;
 
 pub fn parse_string(cursor: &mut Cursor) -> Option<String> {
     let checkpoint = cursor.clone();

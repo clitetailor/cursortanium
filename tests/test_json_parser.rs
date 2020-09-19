@@ -1,10 +1,7 @@
 #[macro_use]
 extern crate lazy_static;
 
-mod parsers;
-
-use cursortanium::{capture, Cursor};
-use parsers::json_parser;
+use cursortanium::{capture, Cursor, parsers::json_parser};
 use ron::de;
 use std::rc::Rc;
 
