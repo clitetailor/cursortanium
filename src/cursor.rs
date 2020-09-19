@@ -11,7 +11,7 @@ pub struct Cursor {
 impl From<&Rc<String>> for Cursor {
     fn from(doc: &Rc<String>) -> Self {
         let doc = doc.clone();
-        let end_index = doc.len();
+        let end_index = doc.chars().count();
 
         Cursor {
             doc,
@@ -24,7 +24,7 @@ impl From<&Rc<String>> for Cursor {
 impl From<String> for Cursor {
     fn from(doc: String) -> Self {
         let doc = Rc::new(doc);
-        let end_index = doc.len();
+        let end_index = doc.chars().count();
 
         Cursor {
             doc,
@@ -37,7 +37,7 @@ impl From<String> for Cursor {
 impl From<&str> for Cursor {
     fn from(doc: &str) -> Self {
         let doc = Rc::new(String::from(doc));
-        let end_index = doc.len();
+        let end_index = doc.chars().count();
 
         Cursor {
             doc,
@@ -53,7 +53,7 @@ impl Cursor {
         index: usize,
     ) -> Cursor {
         let doc = doc.clone();
-        let end_index = doc.len();
+        let end_index = doc.chars().count();
 
         Cursor {
             doc,
@@ -96,9 +96,14 @@ impl Cursor {
 
     pub fn starts_with(&self, test_str: &str) -> bool {
         let start = self.index;
-        let count = test_str.len();
+        let count = test_str.chars().count();
 
-        self.doc[start..(start + count)] == *test_str
+        self.doc
+            .chars()
+            .skip(start)
+            .take(count)
+            .collect::<String>()
+            == *test_str
     }
 
     pub fn one_of<'a>(
@@ -117,14 +122,22 @@ impl Cursor {
     pub fn lookahead(&self, count: usize) -> String {
         let start = self.index;
 
-        self.doc[start..(start + count)].to_owned()
+        self.doc
+            .chars()
+            .skip(start)
+            .take(count)
+            .collect::<String>()
     }
 
     pub fn take_until(&self, cursor: &Cursor) -> String {
         let start = self.index;
         let count = cursor.get_index() - start;
 
-        self.doc[start..(start + count)].to_owned()
+        self.doc
+            .chars()
+            .skip(start)
+            .take(count)
+            .collect::<String>()
     }
 
     pub fn move_to(&mut self, cursor: &Cursor) {

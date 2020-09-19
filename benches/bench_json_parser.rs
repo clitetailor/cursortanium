@@ -28,8 +28,6 @@ fn bench_serde_json_parser(b: &mut Bencher) {
     b.iter(|| {
         let value: Option<Value> =
             serde_json::from_str(DATA).ok();
-
-        value
     });
 }
 
