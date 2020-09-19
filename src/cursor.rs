@@ -11,7 +11,7 @@ pub struct Cursor {
 impl From<&Rc<String>> for Cursor {
     fn from(doc: &Rc<String>) -> Self {
         let doc = doc.clone();
-        let end_index = doc.chars().count();
+        let end_index = doc.len();
 
         Cursor {
             doc,
@@ -24,7 +24,7 @@ impl From<&Rc<String>> for Cursor {
 impl From<String> for Cursor {
     fn from(doc: String) -> Self {
         let doc = Rc::new(doc);
-        let end_index = doc.chars().count();
+        let end_index = doc.len();
 
         Cursor {
             doc,
@@ -37,7 +37,7 @@ impl From<String> for Cursor {
 impl From<&str> for Cursor {
     fn from(doc: &str) -> Self {
         let doc = Rc::new(String::from(doc));
-        let end_index = doc.chars().count();
+        let end_index = doc.len();
 
         Cursor {
             doc,
@@ -53,7 +53,7 @@ impl Cursor {
         index: usize,
     ) -> Cursor {
         let doc = doc.clone();
-        let end_index = doc.chars().count();
+        let end_index = doc.len();
 
         Cursor {
             doc,
