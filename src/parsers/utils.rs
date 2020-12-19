@@ -1,49 +1,47 @@
 use crate::Cursor;
 
 pub fn parse_string(cursor: &mut Cursor) -> Option<String> {
-    let checkpoint = cursor.clone();
+    let last_index = cursor.get_index();
 
     if cursor.starts_with("\"") {
-        cursor.next(1);
+        cursor.next(&1);
     } else {
-        cursor.move_to(&checkpoint);
+        cursor.move_to(&last_index);
 
         return None;
     };
 
-    let mut marker = cursor.clone();
+    let mut temp_index: usize = cursor.get_index();
     let mut chunks: Vec<String> = vec![];
-
-    marker.move_to(&cursor);
 
     while !cursor.starts_with("\"") && !cursor.is_eof() {
         if cursor.starts_with("\\") {
-            chunks.push(marker.take_until(&cursor));
-            cursor.next(1);
+            chunks.push(cursor.read_from(&temp_index).into());
+            cursor.next(&1);
 
             if cursor.starts_with("n") {
                 chunks.push(String::from("\n"));
             } else if cursor.starts_with("t") {
                 chunks.push(String::from("\t"));
             } else {
-                chunks.push(cursor.lookahead(1));
+                chunks.push(cursor.lookahead(&1).into());
             }
 
-            cursor.next(1);
-            marker.move_to(&cursor);
+            cursor.next(&1);
+            temp_index = cursor.get_index();
 
-            cursor.lookahead(10);
+            cursor.lookahead(&10);
         } else {
-            cursor.next(1);
+            cursor.next(&1);
         };
     }
 
-    chunks.push(marker.take_until(&cursor));
+    chunks.push(cursor.read_from(&temp_index).into());
 
     if cursor.starts_with("\"") {
-        cursor.next(1);
+        cursor.next(&1);
     } else {
-        cursor.move_to(&checkpoint);
+        cursor.move_to(&last_index);
 
         return None;
     };

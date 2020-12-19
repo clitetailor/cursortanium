@@ -1,16 +1,15 @@
 use std::iter::IntoIterator;
-use std::rc::Rc;
 use std::vec::IntoIter;
 
 use crate::cursor::Cursor;
 
 pub struct CaptureResult {
-    pub(in crate::test) doc: Rc<String>,
+    pub(in crate::test) doc: String,
     pub(in crate::test) indices: Vec<(String, usize)>,
 }
 
-impl IntoIterator for CaptureResult {
-    type Item = Cursor;
+impl<'a> IntoIterator for &'a CaptureResult {
+    type Item = Cursor<'a>;
     type IntoIter = IntoIter<Self::Item>;
 
     fn into_iter(self) -> Self::IntoIter {

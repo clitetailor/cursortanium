@@ -1,17 +1,15 @@
 use regex::{Match, Regex};
-use std::rc::Rc;
 
 #[derive(Debug)]
-pub struct Cursor {
-    doc: Rc<String>,
+pub struct Cursor<'a> {
+    doc: &'a str,
     index: usize,
     end_index: usize,
 }
 
-impl From<&Rc<String>> for Cursor {
-    fn from(doc: &Rc<String>) -> Self {
-        let doc = doc.clone();
-        let end_index = doc.chars().count();
+impl<'a> From<&'a str> for Cursor<'a> {
+    fn from(doc: &'a str) -> Self {
+        let end_index = doc.len();
 
         Cursor {
             doc,
@@ -21,39 +19,9 @@ impl From<&Rc<String>> for Cursor {
     }
 }
 
-impl From<String> for Cursor {
-    fn from(doc: String) -> Self {
-        let doc = Rc::new(doc);
-        let end_index = doc.chars().count();
-
-        Cursor {
-            doc,
-            index: 0,
-            end_index,
-        }
-    }
-}
-
-impl From<&str> for Cursor {
-    fn from(doc: &str) -> Self {
-        let doc = Rc::new(String::from(doc));
-        let end_index = doc.chars().count();
-
-        Cursor {
-            doc,
-            index: 0,
-            end_index,
-        }
-    }
-}
-
-impl Cursor {
-    pub fn from_string_at(
-        doc: &Rc<String>,
-        index: usize,
-    ) -> Cursor {
-        let doc = doc.clone();
-        let end_index = doc.chars().count();
+impl<'a> Cursor<'a> {
+    pub fn from_string_at(doc: &str, index: usize) -> Cursor {
+        let end_index = doc.len();
 
         Cursor {
             doc,
@@ -62,8 +30,8 @@ impl Cursor {
         }
     }
 
-    pub fn get_doc(&self) -> Rc<String> {
-        self.doc.clone()
+    pub fn get_doc(&self) -> &str {
+        self.doc
     }
 
     pub fn get_index(&self) -> usize {
@@ -74,42 +42,34 @@ impl Cursor {
         self.end_index
     }
 
-    pub fn is_at(&self, cursor: &Cursor) -> bool {
-        self.index == cursor.index
+    pub fn is_at(&self, index: usize) -> bool {
+        self.index == index
     }
 
     pub fn is_eof(&self) -> bool {
         self.index == self.end_index
     }
 
-    pub fn set_index(&mut self, index: usize) {
-        if index > self.end_index {
-            self.index = self.end_index;
-        } else {
-            self.index = index;
-        };
-    }
-
-    pub fn next(&mut self, count: usize) {
-        self.set_index(self.index + count);
+    pub fn next(&mut self, count: &usize) {
+        self.move_to(&(self.index + *count));
     }
 
     pub fn starts_with(&self, test_str: &str) -> bool {
-        let start = self.index;
-        let count = test_str.chars().count();
+        let end_index = self.index + test_str.len();
 
-        self.doc
-            .chars()
-            .skip(start)
-            .take(count)
-            .collect::<String>()
-            == *test_str
+        let end_index = if end_index > self.end_index {
+            self.end_index
+        } else {
+            end_index
+        };
+
+        self.doc[self.index..end_index] == *test_str
     }
 
-    pub fn one_of<'a>(
+    pub fn one_of<'b>(
         &self,
-        test_strs: &'a Vec<&str>,
-    ) -> Option<&'a str> {
+        test_strs: &Vec<&'b str>,
+    ) -> Option<&'b str> {
         for test_str in test_strs {
             if self.starts_with(test_str) {
                 return Some(test_str);
@@ -119,30 +79,25 @@ impl Cursor {
         None
     }
 
-    pub fn lookahead(&self, count: usize) -> String {
-        let start = self.index;
+    pub fn lookahead(&self, count: &usize) -> &str {
+        let end_index = self.index + count;
 
-        self.doc
-            .chars()
-            .skip(start)
-            .take(count)
-            .collect::<String>()
+        let end_index = if end_index > self.end_index {
+            self.end_index
+        } else {
+            end_index
+        };
+
+        &self.doc[self.index..end_index]
     }
 
-    pub fn take_until(&self, cursor: &Cursor) -> String {
-        let start = self.index;
-        let count = cursor.get_index() - start;
-
-        self.doc
-            .chars()
-            .skip(start)
-            .take(count)
-            .collect::<String>()
+    pub fn read_from(&self, last_index: &usize) -> &str {
+        &self.doc[*last_index..self.index]
     }
 
-    pub fn move_to(&mut self, cursor: &Cursor) {
-        self.index = if cursor.index < self.end_index {
-            cursor.index
+    pub fn move_to(&mut self, last_index: &usize) {
+        self.index = if *last_index < self.end_index {
+            *last_index
         } else {
             self.end_index
         };
@@ -155,15 +110,5 @@ impl Cursor {
     pub fn r#match(&self, regex: &Regex) -> Option<Match> {
         self.find(&regex)
             .filter(|mat| mat.start() == self.index)
-    }
-}
-
-impl Clone for Cursor {
-    fn clone(&self) -> Self {
-        Cursor {
-            doc: self.doc.clone(),
-            index: self.index,
-            end_index: self.end_index,
-        }
     }
 }

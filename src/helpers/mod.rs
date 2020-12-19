@@ -3,17 +3,16 @@ use crate::test::capture;
 use crate::Cursor;
 
 use ron::de;
-use std::rc::Rc;
 
 pub fn run_parser_test<
-    T: Fn(&mut Cursor) -> Option<json_parser::ValueToken>,
+    T: Fn(&mut Cursor) -> Option<json_parser::Value>,
 >(
     input: &str,
     expect: &str,
     parse: T,
 ) {
-    let mut iter =
-        capture(&Rc::new(String::from(input))).into_iter();
+    let capture_result = capture(input);
+    let mut iter = capture_result.into_iter();
 
     let cursor = iter.next();
     let target = iter.next();
@@ -25,8 +24,8 @@ pub fn run_parser_test<
 
     let ast = parse(&mut cursor);
 
-    let expect: Option<json_parser::ValueToken> =
-        de::from_str::<Option<json_parser::ValueToken>>(
+    let expect: Option<json_parser::Value> =
+        de::from_str::<Option<json_parser::Value>>(
             &expect,
         )
         .unwrap();
