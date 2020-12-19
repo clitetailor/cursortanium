@@ -1,12 +1,12 @@
 use crate::Cursor;
 
 pub fn parse_string(cursor: &mut Cursor) -> Option<String> {
-    let last_index = cursor.get_index();
+    let last_pos = cursor.clone();
 
     if cursor.starts_with("\"") {
         cursor.next(&1);
     } else {
-        cursor.move_to(&last_index);
+        *cursor = last_pos;
 
         return None;
     };
@@ -41,7 +41,7 @@ pub fn parse_string(cursor: &mut Cursor) -> Option<String> {
     if cursor.starts_with("\"") {
         cursor.next(&1);
     } else {
-        cursor.move_to(&last_index);
+        *cursor = last_pos;
 
         return None;
     };

@@ -12,7 +12,7 @@ use serde_json;
 use serde_json::Value;
 use test::Bencher;
 
-const DATA: &str = include_str!("../assets/test.json");
+const DATA: &str = include_str!("../assets/canada.json");
 
 #[bench]
 fn bench_cursortanium_json_parser(b: &mut Bencher) {

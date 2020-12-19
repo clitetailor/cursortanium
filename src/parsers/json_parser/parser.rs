@@ -27,7 +27,7 @@ pub fn skip_ws(cursor: &mut Cursor) {
 }
 
 pub fn parse_object(cursor: &mut Cursor) -> Option<Value> {
-    let last_index = cursor.get_index();
+    let last_pos = cursor.clone();
 
     if !cursor.starts_with("{") {
         None
@@ -66,14 +66,14 @@ pub fn parse_object(cursor: &mut Cursor) -> Option<Value> {
         }
     }
     .or_else(|| {
-        cursor.move_to(&last_index);
+        *cursor = last_pos;
 
         None
     })
 }
 
 pub fn parse_array(cursor: &mut Cursor) -> Option<Value> {
-    let last_index = cursor.get_index();
+    let last_pos = cursor.clone();
 
     if !cursor.starts_with("[") {
         None
@@ -112,7 +112,7 @@ pub fn parse_array(cursor: &mut Cursor) -> Option<Value> {
         }
     }
     .or_else(|| {
-        cursor.move_to(&last_index);
+        *cursor = last_pos;
 
         None
     })
@@ -121,7 +121,7 @@ pub fn parse_array(cursor: &mut Cursor) -> Option<Value> {
 pub fn parse_field(
     cursor: &mut Cursor,
 ) -> Option<(String, Box<Value>)> {
-    let last_index = cursor.get_index();
+    let last_pos = cursor.clone();
 
     utils::parse_string(&mut *cursor)
         .and_then(|name| {
@@ -142,7 +142,7 @@ pub fn parse_field(
             })
         })
         .or_else(|| {
-            cursor.move_to(&last_index);
+            *cursor = last_pos;
 
             None
         })
@@ -162,7 +162,7 @@ pub fn is_number(cursor: &Cursor) -> bool {
 }
 
 pub fn parse_number(cursor: &mut Cursor) -> Option<Value> {
-    let last_index = cursor.get_index();
+    let last_pos = cursor.clone();
 
     None.or_else(|| {
         if cursor.starts_with("-") {
@@ -193,13 +193,15 @@ pub fn parse_number(cursor: &mut Cursor) -> Option<Value> {
             }
         }
 
-        let value: f64 =
-            cursor.read_from(&last_index).parse().ok()?;
+        let value: f64 = last_pos
+            .take_until(&cursor.get_index())
+            .parse()
+            .ok()?;
 
         Some(Value::Number(value))
     })
     .or_else(|| {
-        cursor.move_to(&last_index);
+        *cursor = last_pos;
 
         None
     })
