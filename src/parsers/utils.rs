@@ -12,19 +12,19 @@ pub fn parse_string(cursor: &mut Cursor) -> Option<String> {
     };
 
     let mut temp_index: usize = cursor.get_index();
-    let mut chunks: Vec<String> = vec![];
+    let mut label: String = String::from("");
 
     while !cursor.starts_with("\"") && !cursor.is_eof() {
         if cursor.starts_with("\\") {
-            chunks.push(cursor.read_from(&temp_index).into());
+            label.push_str(cursor.read_from(&temp_index));
             cursor.next(&1);
 
             if cursor.starts_with("n") {
-                chunks.push(String::from("\n"));
+                label.push_str("\n");
             } else if cursor.starts_with("t") {
-                chunks.push(String::from("\t"));
+                label.push_str("\t");
             } else {
-                chunks.push(cursor.lookahead(&1).into());
+                label.push_str(cursor.lookahead(&1));
             }
 
             cursor.next(&1);
@@ -36,7 +36,7 @@ pub fn parse_string(cursor: &mut Cursor) -> Option<String> {
         };
     }
 
-    chunks.push(cursor.read_from(&temp_index).into());
+    label.push_str(cursor.read_from(&temp_index));
 
     if cursor.starts_with("\"") {
         cursor.next(&1);
@@ -46,5 +46,5 @@ pub fn parse_string(cursor: &mut Cursor) -> Option<String> {
         return None;
     };
 
-    Some(chunks.join(""))
+    Some(label)
 }

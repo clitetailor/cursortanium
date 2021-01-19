@@ -16,7 +16,7 @@ impl Test {
     }
 
     pub fn capture(&self, input: &str) -> CaptureResult {
-        let mut chunks: Vec<String> = vec![];
+        let mut doc: String = String::from("");
         let mut indices: Vec<(String, usize)> = vec![];
         let mut offset: usize = 0;
 
@@ -27,7 +27,7 @@ impl Test {
 
         while !cursor.is_eof() {
             if cursor.starts_with(&self.prefix) {
-                chunks.push(cursor.read_from(&last_index).into());
+                doc.push_str(cursor.read_from(&last_index));
                 last_index = cursor.get_index();
 
                 cursor.next(&prefix_len);
@@ -49,9 +49,7 @@ impl Test {
             };
         }
 
-        chunks.push(cursor.read_from(&last_index).into());
-
-        let doc = chunks.concat().into();
+        doc.push_str(cursor.read_from(&last_index));
 
         CaptureResult { doc, indices }
     }

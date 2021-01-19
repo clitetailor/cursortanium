@@ -54,6 +54,26 @@ impl<'a> Cursor<'a> {
         self.index == self.end_index
     }
 
+    /*
+    pub fn next<'b: 'a>(&'b self, count: &usize) -> Cursor {
+        let remaining = self.end_index - self.index;
+
+        if *count < remaining {
+            Cursor {
+                index: self.index + count,
+                curr_ref: &self.curr_ref[*count..],
+                ..*self
+            }
+        } else {
+            Cursor {
+                curr_ref: &self.curr_ref[remaining..],
+                index: self.end_index,
+                ..*self
+            }
+        }
+    }
+    */
+
     pub fn next(&mut self, count: &usize) {
         let remaining = self.end_index - self.index;
 
