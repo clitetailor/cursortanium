@@ -11,48 +11,85 @@ lazy_static! {
     ]);
 }
 
-pub fn parse(cursor: &mut Cursor) -> Option<Value> {
-    parse_null(&mut *cursor)
-        .or_else(|| parse_string(&mut *cursor))
-        .or_else(|| parse_number(&mut *cursor))
-        .or_else(|| parse_array(&mut *cursor))
-        .or_else(|| parse_object(&mut *cursor))
-        .or_else(|| parse_boolean(&mut *cursor))
+pub fn parse<'a, 'b: 'a>(
+    cursor: &'b Cursor<'a>,
+) -> (&'b Cursor<'a>, Option<Value>) {
+    let cursor = match parse_null(cursor) {
+        (cursor, None) => cursor,
+        (cursor, value) => return (cursor, value),
+    };
+
+    let cursor = match parse_string(cursor) {
+        (cursor, None) => cursor,
+        (cursor, value) => return (cursor, value),
+    };
+
+    let cursor = match parse_number(cursor) {
+        (cursor, None) => cursor,
+        (cursor, value) => return (cursor, value),
+    };
+
+    let cursor = match parse_array(cursor) {
+        (cursor, None) => cursor,
+        (cursor, value) => return (cursor, value),
+    };
+
+    let cursor = match parse_object(cursor) {
+        (cursor, None) => cursor,
+        (cursor, value) => return (cursor, value),
+    };
+
+    let cursor = match parse_boolean(cursor) {
+        (cursor, None) => cursor,
+        (cursor, value) => return (cursor, value),
+    };
+
+    (cursor, None)
 }
 
-pub fn skip_ws(cursor: &mut Cursor) {
+pub fn skip_ws<'a, 'b: 'a>(
+    cursor: &'b Cursor<'a>,
+) -> &'b Cursor<'a> {
+    let mut cursor = cursor;
+
     while cursor.one_of(&WHITESPACES) != None {
-        cursor.next(&1);
+        cursor = &cursor.next(&1);
     }
+
+    cursor
 }
 
-pub fn parse_object(cursor: &mut Cursor) -> Option<Value> {
-    let last_pos = cursor.clone();
+pub fn parse_object<'a, 'b: 'a>(
+    cursor: &'b Cursor<'a>,
+) -> (&'b Cursor<'a>, Option<Value>) {
+    let checkpoint = cursor;
+
+    let mut cursor = cursor;
 
     if !cursor.starts_with("{") {
-        return None;
+        return (checkpoint, None);
     }
 
-    cursor.next(&1);
+    cursor = &cursor.next(&1);
 
-    skip_ws(&mut *cursor);
+    cursor = skip_ws(cursor);
 
     let mut fields: Vec<(String, Box<Value>)> = vec![];
 
     while !cursor.starts_with("}") && !cursor.is_eof() {
-        skip_ws(&mut *cursor);
+        cursor = skip_ws(cursor);
 
-        if let Some(field) = parse_field(&mut *cursor) {
+        if let (cursor, Some(field)) = parse_field(cursor) {
             fields.push(field);
 
-            skip_ws(&mut *cursor);
+            cursor = skip_ws(cursor);
 
             if cursor.starts_with("}") {
                 break;
             };
 
             if cursor.starts_with(",") {
-                cursor.next(&1);
+                cursor = &cursor.next(&1);
             };
         } else {
             break;
@@ -60,44 +97,46 @@ pub fn parse_object(cursor: &mut Cursor) -> Option<Value> {
     }
 
     if !cursor.starts_with("}") {
-        *cursor = last_pos;
+        cursor = checkpoint;
 
-        return None;
+        return (cursor, None);
     }
 
-    cursor.next(&1);
+    cursor = &cursor.next(&1);
 
-    Some(Value::Object(fields))
+    (cursor, Some(Value::Object(fields)))
 }
 
-pub fn parse_array(cursor: &mut Cursor) -> Option<Value> {
-    let last_pos = cursor.clone();
+pub fn parse_array<'a, 'b: 'a>(
+    cursor: &'b Cursor<'a>,
+) -> (&'b Cursor<'a>, Option<Value>) {
+    let checkpoint = cursor;
+
+    let mut cursor = cursor;
 
     if !cursor.starts_with("[") {
-        *cursor = last_pos;
-
-        return None;
+        return (checkpoint, None);
     }
 
-    cursor.next(&1);
+    cursor = &cursor.next(&1);
 
-    skip_ws(&mut *cursor);
+    cursor = skip_ws(cursor);
 
     let mut elements: Vec<Value> = vec![];
 
     while !cursor.starts_with("]") && !cursor.is_eof() {
-        skip_ws(&mut *cursor);
+        cursor = skip_ws(cursor);
 
-        if let Some(element) = parse(&mut *cursor) {
+        if let (cursor, Some(element)) = parse(cursor) {
             elements.push(element);
-            skip_ws(&mut *cursor);
+            cursor = skip_ws(cursor);
 
             if cursor.starts_with("]") {
                 break;
             };
 
             if cursor.starts_with(",") {
-                cursor.next(&1);
+                cursor = &cursor.next(&1);
             };
         } else {
             break;
@@ -105,60 +144,58 @@ pub fn parse_array(cursor: &mut Cursor) -> Option<Value> {
     }
 
     if !cursor.starts_with("]") {
-        *cursor = last_pos;
-
-        return None;
+        return (checkpoint, None);
     }
 
-    cursor.next(&1);
+    cursor = &cursor.next(&1);
 
-    Some(Value::Array(elements))
+    (cursor, Some(Value::Array(elements)))
 }
 
-pub fn parse_field(
-    cursor: &mut Cursor,
-) -> Option<(String, Box<Value>)> {
-    let last_pos = cursor.clone();
+pub fn parse_field<'a, 'b: 'a>(
+    cursor: &'b Cursor<'a>,
+) -> (&'b Cursor<'a>, Option<(String, Box<Value>)>) {
+    let checkpoint = cursor;
 
-    let name = match utils::parse_string(&mut *cursor) {
-        Some(name) => name,
-        None => {
-            *cursor = last_pos;
+    let mut cursor = cursor;
 
-            return None;
+    let name = match utils::parse_string(cursor) {
+        (_, Some(name)) => name,
+        (_, None) => {
+            return (checkpoint, None);
         }
     };
 
-    skip_ws(&mut *cursor);
+    cursor = skip_ws(cursor);
 
     if !cursor.starts_with(":") {
-        *cursor = last_pos;
-
-        return None;
+        return (checkpoint, None);
     };
 
-    cursor.next(&1);
+    cursor = &cursor.next(&1);
 
-    skip_ws(&mut *cursor);
+    cursor = skip_ws(cursor);
 
-    let value = match parse(&mut *cursor) {
-        Some(value) => value,
-        None => {
-            *cursor = last_pos;
-
-            return None;
+    let (cursor, value) = match parse(cursor) {
+        (cursor, Some(value)) => (cursor, value),
+        (cursor, None) => {
+            return (cursor, None);
         }
     };
 
-    skip_ws(&mut *cursor);
+    cursor = skip_ws(cursor);
 
-    Some((name, Box::new(value)))
+    (cursor, Some((name, Box::new(value))))
 }
 
-pub fn parse_string(cursor: &mut Cursor) -> Option<Value> {
-    match utils::parse_string(&mut *cursor) {
-        Some(value) => Some(Value::String(value)),
-        None => None,
+pub fn parse_string<'a, 'b: 'a>(
+    cursor: &'b Cursor<'a>,
+) -> (&'b Cursor<'a>, Option<Value>) {
+    match utils::parse_string(cursor) {
+        (cursor, Some(value)) => {
+            (cursor, Some(Value::String(value)))
+        }
+        (checkpoint, None) => (checkpoint, None),
     }
 }
 
@@ -166,70 +203,71 @@ pub fn is_number(cursor: &Cursor) -> bool {
     cursor.one_of(&DIGITS).is_some()
 }
 
-pub fn parse_number(cursor: &mut Cursor) -> Option<Value> {
-    let last_pos = cursor.clone();
+pub fn parse_number<'a, 'b: 'a>(
+    cursor: &'b Cursor<'a>,
+) -> (&'b Cursor<'a>, Option<Value>) {
+    let checkpoint = cursor;
+
+    let mut cursor = cursor;
 
     if cursor.starts_with("-") {
-        cursor.next(&1);
+        cursor = &cursor.next(&1);
     };
 
     if is_number(&cursor) {
-        cursor.next(&1);
+        cursor = &cursor.next(&1);
     } else {
-        *cursor = last_pos;
+        cursor = checkpoint;
 
-        return None;
+        return (cursor, None);
     }
 
     while is_number(&cursor) {
-        cursor.next(&1);
+        cursor = &cursor.next(&1);
     }
 
     if cursor.starts_with(".") {
-        cursor.next(&1);
+        cursor = &cursor.next(&1);
         if is_number(&cursor) {
-            cursor.next(&1);
+            cursor = &cursor.next(&1);
         } else {
-            *cursor = last_pos;
-
-            return None;
+            return (checkpoint, None);
         }
 
-        while is_number(&*cursor) {
+        while is_number(&cursor) {
             cursor.next(&1);
         }
     }
 
-    let value: f64 = last_pos
-        .take_until(&cursor.get_index())
-        .parse()
-        .ok()?;
+    let value: Option<f64> =
+        checkpoint.take_until(&cursor.get_index()).parse().ok();
 
-    Some(Value::Number(value))
+    match value {
+        None => (checkpoint, None),
+        Some(value) => (cursor, Some(Value::Number(value))),
+    }
 }
 
-pub fn parse_boolean(cursor: &mut Cursor) -> Option<Value> {
+pub fn parse_boolean<'a, 'b: 'a>(
+    cursor: &'b Cursor<'a>,
+) -> (&'b Cursor<'a>, Option<Value>) {
     if cursor.starts_with("true") {
-        cursor.next(&4);
-
-        return Some(Value::Boolean(true));
+        return (&cursor.next(&4), Some(Value::Boolean(true)));
     }
 
     if cursor.starts_with("false") {
-        cursor.next(&5);
-
-        return Some(Value::Boolean(false));
+        return (&cursor.next(&5), Some(Value::Boolean(false)));
     }
 
-    return None;
+    return (cursor, None);
 }
 
-pub fn parse_null(cursor: &mut Cursor) -> Option<Value> {
+pub fn parse_null<'a, 'b: 'a>(
+    cursor: &'b Cursor<'a>,
+) -> (&'b Cursor<'a>, Option<Value>) {
     if cursor.starts_with("null") {
-        cursor.next(&4);
-
-        return Some(Value::Null);
+        return (&cursor.next(&4), Some(Value::Null));
     }
 
-    return None;
+    return (cursor, None);
 }

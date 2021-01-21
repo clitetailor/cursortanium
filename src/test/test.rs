@@ -20,7 +20,7 @@ impl Test {
         let mut indices: Vec<(String, usize)> = vec![];
         let mut offset: usize = 0;
 
-        let mut cursor = Cursor::from(input);
+        let mut cursor = &Cursor::from(input);
         let mut last_index = cursor.get_index();
 
         let prefix_len = self.prefix.chars().count();
@@ -30,13 +30,16 @@ impl Test {
                 doc.push_str(cursor.read_from(&last_index));
                 last_index = cursor.get_index();
 
-                cursor.next(&prefix_len);
+                cursor = &cursor.next(&prefix_len);
 
-                let label = if self.no_label {
-                    String::from("")
+                let (temp, label) = if self.no_label {
+                    (cursor, String::from(""))
                 } else {
-                    parse_label(&mut cursor)
+                    parse_label(cursor)
                 };
+
+                cursor = temp;
+
                 offset =
                     offset + cursor.get_index() - last_index;
 
@@ -45,7 +48,7 @@ impl Test {
 
                 last_index = cursor.get_index();
             } else {
-                cursor.next(&1);
+                cursor = &cursor.next(&1);
             };
         }
 

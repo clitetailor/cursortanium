@@ -1,22 +1,25 @@
 use crate::cursor::Cursor;
 
-pub(in crate) fn parse_label(cursor: &mut Cursor) -> String {
+pub(in crate) fn parse_label<'a, 'b: 'a>(
+    cursor: &'b Cursor<'a>,
+) -> (&'b Cursor<'a>, String) {
     if cursor.starts_with("(") {
-        return String::from("");
+        return (&cursor, String::from(""));
     };
-    cursor.next(&1);
+
+    let mut cursor = &cursor.next(&1);
 
     let last_index = cursor.get_index();
 
     while !cursor.starts_with(")") && !cursor.is_eof() {
-        cursor.next(&1);
+        cursor = &cursor.next(&1);
     }
 
     let name = cursor.read_from(&last_index).into();
 
     if !cursor.is_eof() {
-        cursor.next(&1);
+        cursor = &cursor.next(&1);
     }
 
-    name
+    (&cursor, name)
 }
