@@ -2,4 +2,4 @@ mod parser;
 mod tokens;
 
 pub use parser::parse;
-pub use tokens::ValueToken;
+pub use tokens::Value;

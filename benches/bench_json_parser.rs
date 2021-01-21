@@ -19,7 +19,7 @@ fn bench_cursortanium_json_parser(b: &mut Bencher) {
     b.iter(|| {
         let ast = json_parser::parse(&mut Cursor::from(DATA));
 
-        ast
+        assert!(ast.is_some());
     });
 }
 
@@ -28,6 +28,8 @@ fn bench_serde_json_parser(b: &mut Bencher) {
     b.iter(|| {
         let value: Option<Value> =
             serde_json::from_str(DATA).ok();
+
+        assert!(value.is_some());
     });
 }
 
@@ -39,6 +41,6 @@ fn bench_pest_json_parser(b: &mut Bencher) {
                 .unwrap()
                 .collect();
 
-        tokens
+        assert!(tokens.len() > 0);
     });
 }

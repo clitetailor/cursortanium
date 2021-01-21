@@ -1,50 +1,19 @@
 #[macro_use]
 extern crate lazy_static;
 
-use cursortanium::{capture, Cursor, parsers::json_parser};
-use ron::de;
-use std::rc::Rc;
+mod helpers;
 
-fn run_parser_test<
-    T: Fn(&mut Cursor) -> Option<json_parser::ValueToken>,
->(
-    input: &str,
-    expect: &str,
-    parse: T,
-) {
-    let mut iter =
-        capture(&Rc::new(String::from(input))).into_iter();
-
-    let cursor = iter.next();
-    let target = iter.next();
-
-    assert!(cursor.is_some());
-    assert!(target.is_some());
-
-    let mut cursor = cursor.unwrap();
-
-    let ast = parse(&mut cursor);
-
-    let expect: Option<json_parser::ValueToken> =
-        de::from_str::<Option<json_parser::ValueToken>>(
-            &expect,
-        )
-        .unwrap();
-
-    assert_eq!(ast, expect);
-}
+use cursortanium::{parsers::json_parser, Cursor};
 
 #[test]
 fn test_parse_string() {
-    run_parser_test(
+    helpers::run_parser_test(
         r#"
-            🧀"Autumn shows us how beautiful it is to let thing go."🧀
+            *"Autumn shows us how beautiful it is to let thing go."*
         "#,
         r#"
             Some(
-                String((
-                    value: "Autumn shows us how beautiful it is to let thing go."
-                ))
+                String("Autumn shows us how beautiful it is to let thing go.")
             )
         "#,
         |cursor: &mut Cursor| json_parser::parse(&mut *cursor),
@@ -53,16 +22,12 @@ fn test_parse_string() {
 
 #[test]
 fn test_parse_number() {
-    run_parser_test(
+    helpers::run_parser_test(
         r#"
-            🧀1234🧀
+            *1234*
         "#,
         r#"
-            Some(
-                Number((
-                    value: 1234,
-                ))
-            )
+            Some(Number(1234))
         "#,
         |cursor: &mut Cursor| json_parser::parse(&mut *cursor),
     );
@@ -70,28 +35,18 @@ fn test_parse_number() {
 
 #[test]
 fn test_parse_array() {
-    run_parser_test(
+    helpers::run_parser_test(
         r#"
-            🧀[1, 2, 3, 4]🧀
+            *[1, 2, 3, 4]*
         "#,
         r#"
             Some(
-                Array((
-                    elements: [
-                        Number((
-                            value: 1,
-                        )),
-                        Number((
-                            value: 2,
-                        )),
-                        Number((
-                            value: 3,
-                        )),
-                        Number((
-                            value: 4,
-                        )),
-                    ],
-                ))
+                Array([
+                        Number(1),
+                        Number(2),
+                        Number(3),
+                        Number(4),
+                ])
             )
         "#,
         |cursor: &mut Cursor| json_parser::parse(&mut *cursor),
@@ -100,31 +55,25 @@ fn test_parse_array() {
 
 #[test]
 fn test_parse_object() {
-    run_parser_test(
+    helpers::run_parser_test(
         r#"
-            🧀{
+            *{
                 "name": "Tim Carousel",
                 "age": 24
-            }🧀
+            }*
         "#,
         r#"
             Some(
-                Object((
-                    fields: [
-                        FieldToken(
-                            name: "name",
-                            value: String((
-                                value: "Tim Carousel",
-                            )),
-                        ),
-                        FieldToken(
-                            name: "age",
-                            value: Number((
-                                value: 24,
-                            )),
-                        )
-                    ],
-                ))
+                Object([
+                    (
+                        "name",
+                        String("Tim Carousel"),
+                    ),
+                    (
+                        "age",
+                        Number(24),
+                    )
+                ])
             )
         "#,
         |cursor: &mut Cursor| json_parser::parse(&mut *cursor),

@@ -1,7 +1,4 @@
-use crate::parsers::json_parser;
-use crate::test::capture;
-use crate::Cursor;
-
+use cursortanium::{parsers::json_parser, Cursor, Test};
 use ron::de;
 
 pub fn run_parser_test<
@@ -11,7 +8,12 @@ pub fn run_parser_test<
     expect: &str,
     parse: T,
 ) {
-    let capture_result = capture(input);
+    let capture_result = Test {
+        no_label: true,
+        prefix: String::from('*'),
+    }
+    .capture(input);
+
     let mut iter = capture_result.into_iter();
 
     let cursor = iter.next();
@@ -25,10 +27,8 @@ pub fn run_parser_test<
     let ast = parse(&mut cursor);
 
     let expect: Option<json_parser::Value> =
-        de::from_str::<Option<json_parser::Value>>(
-            &expect,
-        )
-        .unwrap();
+        de::from_str::<Option<json_parser::Value>>(&expect)
+            .unwrap();
 
     assert_eq!(ast, expect);
 }
